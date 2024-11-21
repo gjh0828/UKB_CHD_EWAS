@@ -74,6 +74,15 @@ EWAS_cox_model = function(x) {
   EWAS_cox_model <- EWAS_cox_model %>% filter(!grepl("tt", code))
   return(EWAS_cox_model)
 }
+
+###EWAS analysis
+df <- readRDS("df.rds")                 
 variable.names=readRDS("variable.names.rds")
 result <- rbindlist(setNames(lapply(variable.names, EWAS_cox_model), variable.names))
 rownames(result) <- seq_len(nrow(result))
+                 
+###Random Forests for Survival
+data=df[c("time", "outcome", "p54_i0", "p21022", "p21022_1", "p26227", "p31", "p21000_i0", "Family_history", variable.names)]
+rfsrc_obj <- rfsrc(Surv(time, outcome) ~ ., data = data, ntree = 100, nsplit = 10)
+maxsub <- max.subtree(rfsrc_obj, max.order = TRUE)
+important_vars <- data.frame(order=maxsub$order) %>% mutate(Field = row.names(.))
