@@ -60,7 +60,7 @@ for(var_ in var){
     mutate(id.exposure=data1$ID, exposure=data1$`GWAS ID`)}
   result_MR <- bind_rows(result_MR, a)
   # MR-PRESSO analysis (requires >3 SNPs)
-  if (nrow(data) > 4) {
+  if (nrow(data) > 3) {
     mr_presso_results <- run_mr_presso(data, NbDistribution = 8000)
     MR_PRESSO[var_] <- mr_presso_results
     presso_results <- mr_presso_results[[1]]$`Main MR results` %>%
