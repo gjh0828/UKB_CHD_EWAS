@@ -1,3 +1,4 @@
+library(tidyverse);library(data.table);library(caret);library(interactionR)
 result_interaction <- rbindlist(lapply(colnames(df)[c(3,5,7,9,11,13,15,17)], function(x_) {
   print(x_)
   df$var <- df[[x_]]
