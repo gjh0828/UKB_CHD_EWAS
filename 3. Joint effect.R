@@ -5,8 +5,8 @@ result <- read.csv("result/main_analysis.csv")
 variable_groups <- list(
   "Socioeconomic_status" = unique(Figure1$Field[Figure1$Cat1=="Socioeconomic status"]),
   "Lifestyles" = unique(Figure1$Field[Figure1$Cat1=="Lifestyles"]),
-  "Early_life_factor" = unique(Figure1$Field[Figure1$Cat1=="Early life factor"]),
-  "Psychiosocial_factor" = unique(Figure1$Field[Figure1$Cat1=="Psychiosocial factor"]),
+  "Early_life_factors" = unique(Figure1$Field[Figure1$Cat1=="Early life factors"]),
+  "Psychosocial_factors" = unique(Figure1$Field[Figure1$Cat1=="Psychosocial factors"]),
   "Local_environment" = unique(Figure1$Field[Figure1$Cat1=="Local environment"]),
   "Blood_assays" = unique(Figure1$Field[Figure1$Cat1=="Blood assays"]),
   "Physical_measures" = unique(Figure1$Field[Figure1$Cat1=="Physical measures"]),
@@ -78,3 +78,7 @@ for (group_name in names(variable_groups)) {
   data1 <- df[,c("eid", "score_W")];names(data1) <- c("eid", paste0(group_name,"_W"))
   Joint_exposure <- Joint_exposure %>% left_join(data1, by="eid")
 }
+df=inner_join(inner_join(Joint_exposure,Covariate,by="eid"),outcomes,by="eid")
+df[,c(3,5,7,9,11,13,15,17)] <- lapply(df[,c(3,5,7,9,11,13,15,17)], function(x) {
+  cut(x, breaks = quantile(x, probs = c(0, 1/3, 2/3, 1), na.rm = TRUE), 
+      labels = c("0", "1", "2"), include.lowest = TRUE)})
