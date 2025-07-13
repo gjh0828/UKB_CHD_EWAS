@@ -82,3 +82,34 @@ df=inner_join(inner_join(Joint_exposure,Covariate,by="eid"),outcomes,by="eid")
 df[,c(3,5,7,9,11,13,15,17)] <- lapply(df[,c(3,5,7,9,11,13,15,17)], function(x) {
   cut(x, breaks = quantile(x, probs = c(0, 1/3, 2/3, 1), na.rm = TRUE), 
       labels = c("0", "1", "2"), include.lowest = TRUE)})
+
+population <-  rbindlist(lapply(colnames(df)[c(3,5,7,9,11,13,15,17)], function(x_) {
+  a <- as.data.frame(table(df[[x_]], df$outcome, df$p21022_1)) %>%
+    pivot_wider(names_from = Var2, values_from = 4) 
+  a1 <- a[c(1,3,4)] %>% group_by(Var1) %>% summarise(across(everything(), sum)) %>% mutate(Var3="-1")
+  a <- bind_rows(a, a1) %>%
+    mutate(Var2 = "p21022",Var1_1 = Var1,Var1=paste0(x_, Var1)) %>%
+    mutate(case_total=paste0(`1`," / ",`0`+`1`)) %>% select(c(1,2,5,6,7)) %>% 
+    mutate(Var3 = as.numeric(Var3))
+  return(a)
+})) %>% arrange(Var3)
+result <- rbindlist(lapply(c(-1,0,1,2), function(y_) {
+  if(y_== -1){data <- df} else {data <- df %>% filter(p21022_1 %in% y_)}
+  print(y_)
+  a <- paste0(colnames(df)[c(3,5,7,9,11,13,15,17)],collapse = "+")
+  FML=as.formula(paste0("Surv(time, outcome == 1) ~ ", a, "+ p31+p21022+p54_i0+p21000_i0+Family_history"))
+  model_coxph <- coxph(FML, data = data)
+  GSum_continuous <- as.data.frame(summary(model_coxph)[["coefficients"]]) %>%
+    mutate(Var1 = row.names(.), Var2="p21022", Var3=y_, type = "discrete") %>% 
+    filter(Var1 != "Family_history1")
+  data[, c(2:17)] <- lapply(data[, c(2:17)], as.numeric)
+  model_coxph <- coxph(FML, data = data)
+  GSum_continuous1 <- as.data.frame(summary(model_coxph)[["coefficients"]]) %>%
+    mutate(Var1 = row.names(.), Var2="p21022", Var3=y_, type = "p for trend") %>% 
+    filter(Var1 != "Family_history1")
+  GSum_continuous <- bind_rows(GSum_continuous, GSum_continuous1)
+  return(GSum_continuous)
+}))
+
+
+
